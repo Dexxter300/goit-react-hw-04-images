@@ -73,7 +73,7 @@ export const App = () => {
 
   const handleLoadMore = () => {
     page.current = page.current + 1;
-    console.log(page);
+    // console.log(page);
     // пофиксить страницы
     findPics({ page: page.current, promt: inputText.current })
       .then(res => {
