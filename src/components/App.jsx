@@ -90,15 +90,6 @@ export const App = () => {
         } else {
           setVisible(true);
         }
-        // if (imgs.length >= res.totalHits) {
-        //   this.setState({
-        //     visible: false,
-        //   });
-        // } else {
-        //   this.setState({
-        //     visible: true,
-        //   });
-        // }
       });
   };
 
