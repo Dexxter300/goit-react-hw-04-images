@@ -5,14 +5,6 @@ import css from './modal.module.css';
 const modalRoot = document.querySelector('#modal-root');
 
 export const Modal = ({ img, onClose }) => {
-  useEffect(() => {
-    window.addEventListener('keydown', hendleKeyDown);
-
-    return () => {
-      window.removeEventListener('keydown', hendleKeyDown);
-    };
-  }, []);
-
   // componentWillUnmount() {
   //   window.removeEventListener('keydown', this.hendleKeyDown);
   // }
@@ -29,6 +21,14 @@ export const Modal = ({ img, onClose }) => {
       onClose();
     }
   };
+
+  useEffect(() => {
+    window.addEventListener('keydown', hendleKeyDown);
+
+    return () => {
+      window.removeEventListener('keydown', hendleKeyDown);
+    };
+  });
 
   return createPortal(
     <div className={css.backdrop} onClick={handleBackdropClick}>
