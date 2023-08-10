@@ -1,4 +1,4 @@
-import { Component } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { MagnifyingGlass } from 'react-loader-spinner';
 
 import { Searchbar } from './searchbar/searchbar';
@@ -6,22 +6,20 @@ import { List } from './list/list';
 import { Button } from './button/button';
 import { Modal } from './modal/modal';
 
-export class App extends Component {
-  state = {
-    imgs: [],
-    status: 'pending',
-    error: null,
-    showModal: false,
-    currentImg: null,
-    visible: true,
-  };
-  inputText = '';
-  page = 1;
+export const App = () => {
+  const [imgs, setImgs] = useState([]);
+  const [status, setStatus] = useState('pending');
+  const [error, setError] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+  const [currentImg, setCurrentImg] = useState(null);
+  const [visible, setVisible] = useState(true);
+  let inputText = useRef('');
+  let page = useRef(1);
 
-  componentDidMount() {
-    this.setState({ status: 'pending' });
+  useEffect(() => {
+    setStatus('pending');
 
-    this.findPics({ page: 1, promt: '' })
+    findPics({ page: 1, promt: '' })
       .then(response => {
         // console.log(response);
         if (response.totalHits > 0) {
@@ -32,22 +30,22 @@ export class App extends Component {
         return Promise.reject(new Error('someting went wrong'));
       })
       .then(res => {
-        this.setState({
-          imgs: res.hits,
-          status: 'resolved',
-        });
+        setImgs(res.hits);
+        setStatus('resolved');
       })
       .catch(error => {
-        this.setState({ error, status: 'rejected' });
+        setError(error);
+        setStatus('rejected');
       });
-  }
+  }, []);
 
-  handleSubmit = (e, promt) => {
-    this.page = 1;
-    this.setState({ status: 'pending' });
-    this.inputText = promt;
+  const handleSubmit = (e, promt) => {
+    page.current = 1;
+    // setPage(1);
+    setStatus('pending');
+    inputText.current = promt;
     e.preventDefault();
-    this.findPics({ promt, page: 1 })
+    findPics({ promt, page: 1 })
       .then(response => {
         if (response.totalHits > 0) {
           return response;
@@ -55,62 +53,63 @@ export class App extends Component {
         return Promise.reject(new Error('someting went wrong'));
       })
       .then(res => {
-        this.setState({
-          imgs: res.hits,
-          status: 'resolved',
-        });
+        setImgs(res.hits);
+        setStatus('resolved');
         return res;
       })
       .then(res => {
-        if (this.state.imgs.length >= res.totalHits) {
-          this.setState({
-            visible: false,
-          });
+        if (imgs.length >= res.totalHits) {
+          setVisible(false);
         } else {
-          this.setState({
-            visible: true,
-          });
+          setVisible(true);
         }
       })
       .catch(error => {
-        this.setState({ error, status: 'rejected' });
+        // setState({ error, status: 'rejected' });
+        setError(error);
+        setStatus('rejected');
       });
   };
 
-  handleLoadMore = () => {
-    this.page = this.page + 1;
+  const handleLoadMore = () => {
+    page.current = page.current + 1;
+    console.log(page);
     // пофиксить страницы
-    this.findPics({ page: this.page, promt: this.inputText })
+    findPics({ page: page.current, promt: inputText.current })
       .then(res => {
-        this.setState(prevState => {
-          return { imgs: [...prevState.imgs, ...res.hits] };
+        // console.log(page);
+        setImgs(prevState => {
+          return [...prevState, ...res.hits];
         });
-        console.log(res);
+        // console.log(res);
         return res;
       })
       .then(res => {
-        if (this.state.imgs.length >= res.totalHits) {
-          this.setState({
-            visible: false,
-          });
+        if (imgs.length >= res.totalHits) {
+          setVisible(false);
         } else {
-          this.setState({
-            visible: true,
-          });
+          setVisible(true);
         }
+        // if (imgs.length >= res.totalHits) {
+        //   this.setState({
+        //     visible: false,
+        //   });
+        // } else {
+        //   this.setState({
+        //     visible: true,
+        //   });
+        // }
       });
   };
 
-  toggleModal = currentImg => {
-    // console.log(currentImg);
-    if (currentImg) {
-      this.setState({ currentImg: currentImg });
+  const toggleModal = pickedImg => {
+    // console.log(pickedImg);
+    if (pickedImg) {
+      setCurrentImg(pickedImg);
     }
-    this.setState(({ showModal }) => ({
-      showModal: !showModal,
-    }));
+    setShowModal(showModal => !showModal);
   };
-  async findPics({ promt, page }) {
+  async function findPics({ promt, page }) {
     const response = await fetch(
       `https://pixabay.com/api/?q=${promt}&page=${page}&key=37419057-9cd64d5bcafa6da667183f7e4&image_type=photo&orientation=horizontal&per_page=12`
     );
@@ -119,44 +118,37 @@ export class App extends Component {
     return pics;
   }
 
-  render() {
-    const { status, imgs, error, showModal } = this.state;
+  // render() {
+  //   const { status, imgs, error, showModal } = this.state;
 
-    if (status === 'pending') {
-      return (
-        <div>
-          <Searchbar onSubmit={this.handleSubmit}></Searchbar>
-          <MagnifyingGlass></MagnifyingGlass>
-        </div>
-      );
-    }
-
-    if (status === 'rejected') {
-      return (
-        <div>
-          <Searchbar onSubmit={this.handleSubmit}></Searchbar>
-          <div>{error.message}</div>
-        </div>
-      );
-    }
-
-    if (status === 'resolved') {
-      // console.log(this.state.currentImg);
-      return (
-        <div>
-          {showModal && (
-            <Modal
-              onClose={this.toggleModal}
-              img={this.state.currentImg}
-            ></Modal>
-          )}
-          <Searchbar onSubmit={this.handleSubmit}></Searchbar>
-          <List imgs={imgs} onOpen={this.toggleModal}></List>
-          {this.state.visible && (
-            <Button loadMore={this.handleLoadMore}></Button>
-          )}
-        </div>
-      );
-    }
+  if (status === 'pending') {
+    return (
+      <div>
+        <Searchbar onSubmit={handleSubmit}></Searchbar>
+        <MagnifyingGlass></MagnifyingGlass>
+      </div>
+    );
   }
-}
+
+  if (status === 'rejected') {
+    return (
+      <div>
+        <Searchbar onSubmit={handleSubmit}></Searchbar>
+        <div>{error.message}</div>
+      </div>
+    );
+  }
+
+  if (status === 'resolved') {
+    // console.log(state.currentImg);
+    return (
+      <div>
+        {showModal && <Modal onClose={toggleModal} img={currentImg}></Modal>}
+        <Searchbar onSubmit={handleSubmit}></Searchbar>
+        <List imgs={imgs} onOpen={toggleModal}></List>
+        {visible && <Button loadMore={handleLoadMore}></Button>}
+      </div>
+    );
+  }
+};
+// }
