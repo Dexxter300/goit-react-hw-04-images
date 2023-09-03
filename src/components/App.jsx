@@ -42,6 +42,7 @@ export const App = () => {
   const handleSubmit = (e, promt) => {
     page.current = 1;
     // setPage(1);
+    setVisible(true);
     setStatus('pending');
     inputText.current = promt;
     e.preventDefault();
@@ -58,7 +59,9 @@ export const App = () => {
         return res;
       })
       .then(res => {
-        if (imgs.length >= res.totalHits) {
+        if (res.hits >= res.totalHits) {
+          // console.log(res.imgResponse);
+          // console.log(response);
           setVisible(false);
         } else {
           setVisible(true);
